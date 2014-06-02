@@ -98,12 +98,27 @@ object Huffman {
    * head of the list should have the smallest weight), where the weight
    * of a leaf is the frequency of the character.
    */
-  def makeOrderedLeafList(freqs: List[(Char, Int)]): List[Leaf] = ???
+  def makeOrderedLeafList(freqs: List[(Char, Int)]): List[Leaf] = {
+    def listAcc(freqTable: List[(Char,Int)], acc: List[Leaf], smWeight: Int): List[Leaf] = freqTable match {
+      case List() => acc
+      case current :: others => 
+        if(current._2 < smWeight ) {
+          listAcc(freqTable.tail, new Leaf(current._1, current._2) :: acc, current._2)
+        }else{
+          listAcc(freqTable.tail, acc :+ new Leaf(current._1, current._2), smWeight)
+        }
+    }
+    
+    listAcc(freqs, List(), 0)
+  }
 
   /**
    * Checks whether the list `trees` contains only one single code tree.
    */
-  def singleton(trees: List[CodeTree]): Boolean = ???
+  def singleton(trees: List[CodeTree]): Boolean =  trees match {
+    case List() => !trees.isEmpty
+    case head :: rest => rest.isEmpty
+  }
 
   /**
    * The parameter `trees` of this function is a list of code trees ordered
@@ -117,7 +132,17 @@ object Huffman {
    * If `trees` is a list of less than two elements, that list should be returned
    * unchanged.
    */
-  def combine(trees: List[CodeTree]): List[CodeTree] = ???
+  def combine(trees: List[CodeTree]): List[CodeTree] = trees match {
+    case head :: rest => 
+      if(rest.isEmpty) {
+        trees 
+      }else{
+        trees
+        //maybe have a combiner that takes two trees and combines them into one
+        //def use the weight function that returns the weight of the tree
+        //have a way to recurse through the tree????
+      }
+  }
 
   /**
    * This function will be called in the following way:
