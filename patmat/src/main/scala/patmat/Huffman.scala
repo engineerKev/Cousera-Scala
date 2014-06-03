@@ -76,15 +76,15 @@ object Huffman {
 
     def counter(allChars: List[Char], acc: List[(Char, Int)]): List[(Char, Int)] = allChars match {
       case List() => acc
-      case _ => counter(allChars.tail, accEditor(allChars, acc))
+      case current :: others => counter(allChars.tail, accEditor(current, acc))
     }
 
-    def accEditor(theChars: List[Char], theAcc: List[(Char, Int)]): List[(Char, Int)] =  theAcc match{
-      case List() => List((theChars.head, 1))
-      case current :: others => if(current._1 == theChars.head) {
-        (current._1, current._2+1) :: others
-      }else{
-        current :: accEditor(theChars,others)
+    def accEditor(theChar: Char, theAcc: List[(Char, Int)]): List[(Char, Int)] = theAcc match {
+      case List() => List((theChar, 1))
+      case current :: others => if (current._1 == theChar) {
+        (current._1, current._2 + 1) :: others
+      } else {
+        current :: accEditor(theChar, others)
       }
     }
 
@@ -99,23 +99,26 @@ object Huffman {
    * of a leaf is the frequency of the character.
    */
   def makeOrderedLeafList(freqs: List[(Char, Int)]): List[Leaf] = {
-    def listAcc(freqTable: List[(Char,Int)], acc: List[Leaf], smWeight: Int): List[Leaf] = freqTable match {
-      case List() => acc
-      case current :: others => 
-        if(current._2 < smWeight ) {
-          listAcc(freqTable.tail, new Leaf(current._1, current._2) :: acc, current._2)
-        }else{
-          listAcc(freqTable.tail, acc :+ new Leaf(current._1, current._2), smWeight)
-        }
+    
+    def freqMax(freqs: List[(Char,Int)], max: (Char,Int)): (Char,Int) = {
+    if(freqs.isEmpty) max
+      else if(freqs.head._2 > max._2) freqMax(freqs.tail, freqs.head)
+      else freqMax(freqs.tail,max)
     }
     
-    listAcc(freqs, List(), 0)
+    def listAcc(freqTable: List[(Char, Int)], acc: List[Leaf]): List[Leaf] = freqTable match {
+      case List() => acc
+      case current :: others =>
+        val newest = freqMax(others, current)
+          listAcc(freqTable.filter(i => i._2 != newest._2), new Leaf(newest._1, newest._2) :: acc)
+    }
+    listAcc(freqs,List())
   }
 
   /**
    * Checks whether the list `trees` contains only one single code tree.
    */
-  def singleton(trees: List[CodeTree]): Boolean =  trees match {
+  def singleton(trees: List[CodeTree]): Boolean = trees match {
     case List() => !trees.isEmpty
     case head :: rest => rest.isEmpty
   }
@@ -132,16 +135,18 @@ object Huffman {
    * If `trees` is a list of less than two elements, that list should be returned
    * unchanged.
    */
-  def combine(trees: List[CodeTree]): List[CodeTree] = trees match {
-    case head :: rest => 
-      if(rest.isEmpty) {
-        trees 
-      }else{
-        trees
-        //maybe have a combiner that takes two trees and combines them into one
-        //def use the weight function that returns the weight of the tree
-        //have a way to recurse through the tree????
-      }
+  def combine(trees: List[CodeTree]): List[CodeTree] = {
+    
+    def putItIn(newest: CodeTree, old: List[CodeTree], acc: List[CodeTree]): List[CodeTree] = old match {
+      case List() => acc
+      case current :: others =>
+        val myWeight = weight(newest)
+        if(others.isEmpty) putItIn(newest, old.tail, acc :+ newest)
+        else if(weight(current) < myWeight && weight(others.head) > myWeight)  putItIn(newest, List(), acc ::: (newest :: others))
+        else putItIn(newest,old.tail, acc :+ old.head)
+    }
+    
+    putItIn(makeCodeTree(trees.head,trees.tail.head), trees.drop(2), List())
   }
 
   /**
@@ -161,7 +166,14 @@ object Huffman {
    *    the example invocation. Also define the return type of the `until` function.
    *  - try to find sensible parameter names for `xxx`, `yyy` and `zzz`.
    */
-  def until(xxx: ???, yyy: ???)(zzz: ???): ??? = ???
+  def until(justOne: List[CodeTree] => Boolean, mergeTrees: List[CodeTree] => List[CodeTree])(allTrees: List[CodeTree]): List[CodeTree] = {
+    if(justOne(allTrees)) allTrees
+    else {
+      val newTreeList = mergeTrees(allTrees)
+      until(justOne, mergeTrees)(newTreeList)
+    }
+    
+  }
 
   /**
    * This function creates a code tree which is optimal to encode the text `chars`.
@@ -169,7 +181,7 @@ object Huffman {
    * The parameter `chars` is an arbitrary text. This function extracts the character
    * frequencies from that text and creates a code tree based on them.
    */
-  def createCodeTree(chars: List[Char]): CodeTree = ???
+  def createCodeTree(chars: List[Char]): CodeTree = until(singleton, combine)(makeOrderedLeafList(times(chars))).head
 
   // Part 3: Decoding
 
@@ -179,7 +191,16 @@ object Huffman {
    * This function decodes the bit sequence `bits` using the code tree `tree` and returns
    * the resulting list of characters.
    */
-  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = ???
+  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
+    //make the reccursive call on the accumulator  and have it call the 
+    //make string function over and over again
+    //change case so that you return when you hit a leaf
+    //maybe consider figuring out how to keep track of what bits you've removed from the list.....
+    def makeString(tree: CodeTree, bits: List[Bit], chars: List[Char]): List[Char] = bits match {
+      case List() => chars
+      case current :: others =>
+    }
+  }
 
   /**
    * A Huffman coding tree for the French language.
