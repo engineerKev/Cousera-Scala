@@ -119,7 +119,7 @@ object Huffman {
    * Checks whether the list `trees` contains only one single code tree.
    */
   def singleton(trees: List[CodeTree]): Boolean = trees match {
-    case List() => !trees.isEmpty
+    case List() => false
     case head :: rest => rest.isEmpty
   }
 
@@ -195,22 +195,23 @@ object Huffman {
    * This function decodes the bit sequence `bits` using the code tree `tree` and returns
    * the resulting list of characters.
    */
-  def decode(tree: CodeTree, bits: List[Bit]): List[Char] = {
-    def makeList(root: CodeTree, tree: CodeTree, bits: List[Bit], acc: List[Char]): List[Char] = (bits, tree) match {
-
-      case (List(_), Leaf(char, leafWeight)) => makeList(root, root, bits, acc ::: List(char))
-
-      case (List(), _) => acc
-
-      case (current :: others, Fork(left, right, forkChars, forkWeight)) =>
-        if (current < 1) {
-          makeList(root, left, others, acc)
-        } else {
-          makeList(root, right, others, acc)
+  def decode(root: CodeTree, bits: List[Bit]): List[Char] = {
+    def goBits(node: CodeTree, daBits: List[Bit], acc: List[Char]): List[Char] = daBits match {
+      case List() =>
+        def checkForLeaf(isLeaf: CodeTree): List[Char] = isLeaf match {
+          case Leaf(lChar, lWeight) => List(lChar)
+          case _ => List()
         }
-
+        acc ::: checkForLeaf(node)
+      case current :: others =>
+        def traverseTree(nextNode: CodeTree): List[Char] = nextNode match {
+          case Fork(left, right, fChars, fWeight) =>
+            if (current == 1) goBits(right, others, acc) else goBits(left, others, acc)
+          case Leaf(char, lweight) => goBits(root, daBits, acc :+ char)
+        }
+        traverseTree(node)
     }
-    makeList(tree, tree, bits, List())
+    goBits(root, bits, List())
   }
 
   /**
@@ -301,16 +302,16 @@ object Huffman {
   def quickEncode(tree: CodeTree)(text: List[Char]): List[Bit] = {
     def daBits(table: CodeTable, daChars: List[Char], bitList: List[Bit]): List[Bit] = daChars match {
       case List() => bitList
-      
+
       case current :: others =>
-        
+
         def findInTable(table1: CodeTable, char: Char, acc: List[Bit]): List[Bit] = {
-          
+
           if (table1.head._1 == char) daBits(table, daChars.tail, acc ::: table1.head._2)
           else findInTable(table1.tail, char, acc)
-          
+
         }
-        
+
         findInTable(table, current, bitList)
     }
     daBits(convert(tree), text, List())
