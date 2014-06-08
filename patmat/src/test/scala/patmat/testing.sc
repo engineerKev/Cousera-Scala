@@ -26,7 +26,9 @@ val secret: List[Bit] = List(0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 
                                                   //| 0, 1)
 
 val french = decode(frenchCode, secret)           //> french  : List[Char] = List(h, u, f, f, m, a, n, e, s, t, c, o, o, l)
-
-val leF = List('f')                               //> leF  : List[Char] = List(f)-
-val leSecret = encode(frenchCode)(leF)
+val leSecret = encode(frenchCode)(french)         //> leSecret  : List[patmat.Huffman.Bit] = List(0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1
+                                                  //| , 0, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0
+                                                  //| , 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1
+                                                  //| , 0, 1)
+leSecret == secret                                //> res0: Boolean = true
 }

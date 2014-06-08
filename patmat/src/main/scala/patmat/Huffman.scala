@@ -99,29 +99,18 @@ object Huffman {
    * of a leaf is the frequency of the character.
    */
   def makeOrderedLeafList(freqs: List[(Char, Int)]): List[Leaf] = {
-
-    def freqMax(freqs: List[(Char, Int)], max: (Char, Int)): (Char, Int) = {
-      if (freqs.isEmpty) max
-      else if (freqs.head._2 > max._2) freqMax(freqs.tail, freqs.head)
-      else freqMax(freqs.tail, max)
-    }
-
-    def listAcc(freqTable: List[(Char, Int)], acc: List[Leaf]): List[Leaf] = freqTable match {
-      case List() => acc
-      case current :: others =>
-        val newest = freqMax(others, current)
-        listAcc(freqTable.filter(i => i._2 != newest._2), new Leaf(newest._1, newest._2) :: acc)
-    }
-    listAcc(freqs, List())
+	  def makeList(tuples: List[(Char, Int)], acc: List[Leaf]): List[Leaf] = tuples match {
+	    case List() => acc.sortBy(leaf => weight(leaf))
+	    case current :: others => makeList(tuples.tail, new Leaf(current._1, current._2) :: acc)
+	  }
+	makeList(freqs, List())
   }
 
   /**
    * Checks whether the list `trees` contains only one single code tree.
    */
-  def singleton(trees: List[CodeTree]): Boolean = trees match {
-    case List() => false
-    case head :: rest => rest.isEmpty
-  }
+  def singleton(trees: List[CodeTree]): Boolean = trees.size == 1
+
 
   /**
    * The parameter `trees` of this function is a list of code trees ordered
@@ -138,19 +127,7 @@ object Huffman {
   def combine(trees: List[CodeTree]): List[CodeTree] = trees match {
     case List() => trees
     case current :: List() => trees
-    case current :: next :: others =>
-      def fixTree(newEntry: CodeTree, allTrees: List[CodeTree], newWeight: Int): List[CodeTree] = allTrees match {
-        case current :: List() =>
-          if (weight(current) < newWeight) allTrees :+ newEntry
-          else newEntry :: allTrees
-        case current :: next :: others =>
-          val cWeight = weight(current)
-          val nWeight = weight(next)
-          if (newWeight > cWeight && newWeight < nWeight) current :: newEntry :: next :: others
-          else fixTree(newEntry, allTrees.tail, newWeight)
-      }
-      val newOne = makeCodeTree(current, next)
-      fixTree(newOne, others, weight(newOne))
+    case current :: next :: others => (makeCodeTree(current, next) :: others).sortBy(tree => weight(tree))
   }
 
   /**
@@ -170,13 +147,9 @@ object Huffman {
    *    the example invocation. Also define the return type of the `until` function.
    *  - try to find sensible parameter names for `xxx`, `yyy` and `zzz`.
    */
-  def until(justOne: List[CodeTree] => Boolean, mergeTrees: List[CodeTree] => List[CodeTree])(allTrees: List[CodeTree]): List[CodeTree] = {
-    if (justOne(allTrees)) allTrees
-    else {
-      val newTreeList = mergeTrees(allTrees)
-      until(justOne, mergeTrees)(newTreeList)
-    }
-
+  def until(singleton: List[CodeTree] => Boolean, combine: List[CodeTree] => List[CodeTree])(allTrees: List[CodeTree]): List[CodeTree] = {
+    if (singleton(allTrees)) allTrees
+    else until(singleton, combine)(combine(allTrees))
   }
 
   /**
@@ -239,19 +212,16 @@ object Huffman {
    * into a sequence of bits.
    */
   def encode(tree: CodeTree)(text: List[Char]): List[Bit] = {
-
-    def buildList(tree1: CodeTree, text1: List[Char], bitList: List[Bit]): List[Bit] = text match {
-      case List() => bitList
-      case current :: others => traverseTree(tree1, current, bitList)
+    def textToBits(root: CodeTree, allChars: List[Char], bits: List[Bit]): List[Bit] = allChars match {
+      case List() => bits
+      case current :: others =>
+        def searchTree(node: CodeTree, acc: List[Bit]): List[Bit] = node match {
+          case Fork(left, right, fchars, fweight) => if (chars(left).contains(current)) searchTree(left, acc :+ 0) else searchTree(right, acc :+ 1)
+          case Leaf(lchar, lweight) => textToBits(root, others, acc)
+        }
+        searchTree(root, bits)
     }
-
-    def traverseTree(tree2: CodeTree, char2Find: Char, bitList1: List[Bit]): List[Bit] = tree match {
-      case Leaf(char, leafWeight) => buildList(tree, text.tail, bitList1)
-      case Fork(left, right, fChars, fWeight) => if (chars(left).contains(char2Find)) traverseTree(left, char2Find, bitList1 :+ 0)
-      else traverseTree(right, char2Find, bitList1 :+ 1)
-
-    }
-    buildList(tree, text, List())
+    textToBits(tree, text, List())
   }
 
   // Part 4b: Encoding using code table
