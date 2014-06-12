@@ -125,9 +125,50 @@ object anagramsTesting {
 
   1 until 2                                       //> res8: scala.collection.immutable.Range = Range(1)
 
-  val alist = List(List(), List(('b', 1)), List(('b', 2)), List(('a', 1)), List(('a', 2)))
-                                                  //> alist  : List[List[(Char, Int)]] = List(List(), List((b,1)), List((b,2)), L
-                                                  //| ist((a,1)), List((a,2)))
+val mySentence:List[Word] = List("today", "I", "went", "to", "the", "festival")
+                                                  //> mySentence  : List[forcomp.anagramsTesting.Word] = List(today, I, went, to,
+                                                  //|  the, festival)
+
+val myWords: List[Word] = List("today", "to", "went")
+                                                  //> myWords  : List[forcomp.anagramsTesting.Word] = List(today, to, went)
+
+val subSet = sentenceOccurrences(myWords).sortBy(x=>x._1)
+                                                  //> subSet  : List[(Char, Int)] = List((a,1), (d,1), (e,1), (n,1), (o,2), (t,3)
+                                                  //| , (w,1), (y,1))
+
+
+val unwanted = subSet.toSet                       //> unwanted  : scala.collection.immutable.Set[(Char, Int)] = Set((e,1), (w,1),
+                                                  //|  (n,1), (d,1), (t,3), (a,1), (o,2), (y,1))
+val superSet = sentenceOccurrences(mySentence).sortBy(x=>x._1)
+                                                  //> superSet  : List[(Char, Int)] = List((a,2), (d,1), (e,3), (f,1), (h,1), (i,
+                                                  //| 2), (l,1), (n,1), (o,2), (s,1), (t,5), (v,1), (w,1), (y,1))
+
+val superS = superSet.toSet                       //> superS  : scala.collection.immutable.Set[(Char, Int)] = Set((i,2), (w,1), (
+                                                  //| a,2), (s,1), (h,1), (e,3), (n,1), (l,1), (d,1), (v,1), (f,1), (t,5), (o,2),
+                                                  //|  (y,1))
+
+superSet filterNot(unwanted) groupBy(x=>x._1)     //> res9: scala.collection.immutable.Map[Char,List[(Char, Int)]] = Map(e -> Lis
+                                                  //| t((e,3)), s -> List((s,1)), t -> List((t,5)), f -> List((f,1)), a -> List((
+                                                  //| a,2)), i -> List((i,2)), v -> List((v,1)), l -> List((l,1)), h -> List((h,1
+                                                  //| )))
+
+subSet filterNot(superS)                          //> res10: List[(Char, Int)] = List((a,1), (e,1), (t,3))
+
+  
+  
+def subtract(superSet: Occurrences, subSet: Occurrences): Occurrences = {
+	def uniqueSet(outer:Occurrences, inner:Occurrences, acc:Occurrences): Occurrences = (inner, outer) match {
+		case (List(),_) => acc ::: outer
+		case ((c_i,n_i) :: others_i, (c_o, n_o) :: others_o) =>
+			if(c_i == c_o && (n_i < n_o)) uniqueSet(others_o, others_i,(c_o,n_o-n_i) :: acc)
+			else uniqueSet(others_o, inner, (c_o,n_o)::acc )
+	}
+	uniqueSet(superSet filterNot(subSet.toSet), subSet filterNot(superSet.toSet), List()).sortBy(x=>x._1)
+}                                                 //> subtract: (superSet: forcomp.anagramsTesting.Occurrences, subSet: forcomp.a
+                                                  //| nagramsTesting.Occurrences)forcomp.anagramsTesting.Occurrences
+
+subtract(superSet, subSet)                        //> res11: forcomp.anagramsTesting.Occurrences = List((a,1), (e,2), (f,1), (h,1
+                                                  //| ), (i,2), (l,1), (s,1), (t,2), (v,1))
 
   /*
    * occurrence list `List(('a', 2), ('b', 2))`

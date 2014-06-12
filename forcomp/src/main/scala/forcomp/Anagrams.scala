@@ -96,17 +96,25 @@ object Anagrams {
   }
 
   /**
-   * Subtracts occurrence list `y` from occurrence list `x`.
+   * Subtracts occurrence list `y(subSet)` from occurrence list `x(superSet)`.
    *
-   *  The precondition is that the occurrence list `y` is a subset of
-   *  the occurrence list `x` -- any character appearing in `y` must
-   *  appear in `x`, and its frequency in `y` must be smaller or equal
-   *  than its frequency in `x`.
+   *  The precondition is that the occurrence list `y(subSet)` is a subset of
+   *  the occurrence list `x(superSet)` -- any character appearing in `y(subSet)` must
+   *  appear in `x(superSet)`, and its frequency in `y(subSet)` must be smaller or equal
+   *  than its frequency in `x(superSet)`.
    *
    *  Note: the resulting value is an occurrence - meaning it is sorted
    *  and has no zero-entries.
    */
-  def subtract(x: Occurrences, y: Occurrences): Occurrences = ???
+  def subtract(superSet: Occurrences, subSet: Occurrences): Occurrences = {
+    def uniqueSet(outer: Occurrences, inner: Occurrences, acc: Occurrences): Occurrences = (inner, outer) match {
+      case (List(), _) => acc ::: outer
+      case ((c_i, n_i) :: others_i, (c_o, n_o) :: others_o) =>
+        if (c_i == c_o && (n_i < n_o)) uniqueSet(others_o, others_i, (c_o, n_o - n_i) :: acc)
+        else uniqueSet(others_o, inner, (c_o, n_o) :: acc)
+    }
+    uniqueSet(superSet filterNot (subSet.toSet), subSet filterNot (superSet.toSet), List()).sortBy(x => x._1)
+  }
 
   /**
    * Returns a list of all anagram sentences of the given sentence.
