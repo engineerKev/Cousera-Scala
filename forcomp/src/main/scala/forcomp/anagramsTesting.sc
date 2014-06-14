@@ -1,4 +1,5 @@
 package forcomp
+import common._
 
 object anagramsTesting {
   println("Welcome to the Scala worksheet")       //> Welcome to the Scala worksheet
@@ -40,15 +41,15 @@ object anagramsTesting {
 
   val dic: List[Word] = List("eat", "tea", "ate") //> dic  : List[forcomp.anagramsTesting.Word] = List(eat, tea, ate)
 
-  val dictionaryByOccurrences: Map[Occurrences, List[Word]] = dic groupBy (w => wordOccurrences(w))
-                                                  //> dictionaryByOccurrences  : Map[forcomp.anagramsTesting.Occurrences,List[forc
-                                                  //| omp.anagramsTesting.Word]] = Map(List((a,1), (e,1), (t,1)) -> List(eat, tea,
-                                                  //|  ate))
+  val dictionaryByOccurrencesTest: Map[Occurrences, List[Word]] = dic groupBy (w => wordOccurrences(w))
+                                                  //> dictionaryByOccurrencesTest  : Map[forcomp.anagramsTesting.Occurrences,List[
+                                                  //| forcomp.anagramsTesting.Word]] = Map(List((a,1), (e,1), (t,1)) -> List(eat, 
+                                                  //| tea, ate))
 
   def wordAnagrams(word: Word): List[Word] = ???  //> wordAnagrams: (word: forcomp.anagramsTesting.Word)List[forcomp.anagramsTesti
                                                   //| ng.Word]
 
-  (dictionaryByOccurrences get wordOccurrences("tea")).head
+  (dictionaryByOccurrencesTest get wordOccurrences("tea")).head
                                                   //> res0: List[forcomp.anagramsTesting.Word] = List(eat, tea, ate)
 
   val combinationtest = List(('a', 2), ('b', 2))  //> combinationtest  : List[(Char, Int)] = List((a,2), (b,2))
@@ -170,21 +171,78 @@ def subtract(superSet: Occurrences, subSet: Occurrences): Occurrences = {
 subtract(superSet, subSet)                        //> res11: forcomp.anagramsTesting.Occurrences = List((a,1), (e,2), (f,1), (h,1
                                                   //| ), (i,2), (l,1), (s,1), (t,2), (v,1))
 
-  /*
-   * occurrence list `List(('a', 2), ('b', 2))`
-   *List(
-   *      List(),
-   *      List(('a', 1)),
-   *      List(('a', 2)),
-   *      List(('b', 1)),
-   *      List(('a', 1), ('b', 1)),
-   *      List(('a', 2), ('b', 1)),
-   *      List(('b', 2)),
-   *      List(('a', 1), ('b', 2)),
-   *      List(('a', 2), ('b', 2))
+val sentence4Anagram = List("Yes", "man")         //> sentence4Anagram  : List[String] = List(Yes, man)
+
+lazy val dictionaryByOccurrences: Map[Occurrences, List[Word]] = dictionary groupBy (w => wordOccurrences(w))
+                                                  //> dictionaryByOccurrences: => Map[forcomp.anagramsTesting.Occurrences,List[fo
+                                                  //| rcomp.anagramsTesting.Word]]
+
+def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
+	def anagramBuilder(allOccurs: Occurrences): List[Sentence] = {
+		if(allOccurs.size == 0) List(List())
+		else
+			for {
+				combo <- combinations(allOccurs).filter(x => !x.isEmpty)
+				
+				word <- dictionaryByOccurrences.getOrElse(combo, List())
+				
+				sentence <- anagramBuilder(subtract(allOccurs, wordOccurrences(word)))
+				
+				if !combo.isEmpty
+			} yield word :: sentence
+	}
+	anagramBuilder(sentenceOccurrences(sentence))
+}                                                 //> sentenceAnagrams: (sentence: forcomp.anagramsTesting.Sentence)List[forcomp.
+                                                  //| anagramsTesting.Sentence]
+
+val subSentences = combinations(sentenceOccurrences(sentence4Anagram)) filter(x => !x.isEmpty)
+                                                  //> subSentences  : List[forcomp.anagramsTesting.Occurrences] = List(List((y,1)
+                                                  //| ), List((s,1)), List((s,1), (y,1)), List((n,1)), List((n,1), (y,1)), List((
+                                                  //| n,1), (s,1)), List((n,1), (s,1), (y,1)), List((m,1)), List((m,1), (y,1)), L
+                                                  //| ist((m,1), (s,1)), List((m,1), (s,1), (y,1)), List((m,1), (n,1)), List((m,1
+                                                  //| ), (n,1), (y,1)), List((m,1), (n,1), (s,1)), List((m,1), (n,1), (s,1), (y,1
+                                                  //| )), List((e,1)), List((e,1), (y,1)), List((e,1), (s,1)), List((e,1), (s,1),
+                                                  //|  (y,1)), List((e,1), (n,1)), List((e,1), (n,1), (y,1)), List((e,1), (n,1), 
+                                                  //| (s,1)), List((e,1), (n,1), (s,1), (y,1)), List((e,1), (m,1)), List((e,1), (
+                                                  //| m,1), (y,1)), List((e,1), (m,1), (s,1)), List((e,1), (m,1), (s,1), (y,1)), 
+                                                  //| List((e,1), (m,1), (n,1)), List((e,1), (m,1), (n,1), (y,1)), List((e,1), (m
+                                                  //| ,1), (n,1), (s,1)), List((e,1), (m,1), (n,1), (s,1), (y,1)), List((a,1)), L
+                                                  //| ist((a,1), (y,1)), List((a,1), (s,1)), List((a,1), (s,1), (y,1)), List((a,1
+                                                  //| ), (n,1)), List((a,1), 
+                                                  //| Output exceeds cutoff limit.
+
+
+List(List()) ::: List(List('a'))                  //> res12: List[List[Char]] = List(List(), List(a))
+
+
+dictionaryByOccurrences get (subSentences.tail.head)
+                                                  //> res13: Option[List[forcomp.anagramsTesting.Word]] = None
+
+
+
+
+sentenceAnagrams(sentence4Anagram)                //> res14: List[forcomp.anagramsTesting.Sentence] = List(List(my, en, as), List
+                                                  //| (my, as, en), List(my, sane), List(my, Sean), List(yes, man), List(en, my, 
+                                                  //| as), List(en, as, my), List(men, say), List(as, my, en), List(as, en, my), 
+                                                  //| List(say, men), List(man, yes), List(sane, my), List(Sean, my))
+
+/*
+   *    List(
+   *      List(en, as, my),
+   *      List(en, my, as),
+   *      List(man, yes),
+   *      List(men, say),
+   *      List(as, en, my),
+   *      List(as, my, en),
+   *      List(sane, my),
+   *      List(Sean, my),
+   *      List(my, en, as),
+   *      List(my, as, en),
+   *      List(my, sane),
+   *      List(my, Sean),
+   *      List(say, men),
+   *      List(yes, man)
    *    )
    */
-
-  //val numsSubset = nums.subsets.map(_.toList).toList
 
 }
